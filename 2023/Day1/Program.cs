@@ -1,27 +1,26 @@
 ﻿using System.Text.RegularExpressions;
 
+var p2 = args.FirstOrDefault() == "pt2";
 var sum = 0;
-var numRegex = args.FirstOrDefault() == "p2"
-	? NumRegex()
-	: DigitRegex();
+var firstNumRegex = p2 ? FirstNumRegex() : FirstDigitRegex();
+var lastNumRegex = p2 ? LastNumRegex() : LastDigitRegex();
 
 using var file = new StreamReader(File.OpenRead("/Users/tkimmett/source/adventofcode/2023/Day1/input.txt"));
 while (!file.EndOfStream)
 {
-	var line = file.ReadLine();
-	var matches = numRegex.Matches(line!);
+	var line = file.ReadLine()!;
 
-	var firstDigit = ToNumber(matches.First().Value);
-	var lastDigit = ToNumber(matches.Last().Value, end: true);
+	var firstDigit = ToNumber(firstNumRegex.Match(line).ValueSpan);
+	var lastDigit = ToNumber(lastNumRegex.Match(line).ValueSpan);
 
 	var calibrationValue = int.Parse(new ReadOnlySpan<char>([firstDigit, lastDigit]));
 
 	sum += calibrationValue;
 }
 
-Console.WriteLine($"Sum of calibration values = {sum}");
+Console.WriteLine($"Sum of calibration values{(p2 ? " (pt2)" : "")} = {sum}");
 
-static char ToNumber(string value, bool end = false)
+static char ToNumber(ReadOnlySpan<char> value)
 {
 	if (value.Length == 1)
 	{
@@ -40,20 +39,6 @@ static char ToNumber(string value, bool end = false)
 			"seven" => '7',
 			"eight" => '8',
 			"nine" => '9',
-			"twone" when end => '1',
-			"twone" when !end => '2',
-			"sevenine" when end => '9',
-			"sevenine" when !end => '7',
-			"threeight" when end => '8',
-			"threeight" when !end => '3',
-			"nineight" when end => '8',
-			"nineight" when !end => '9',
-			"fiveight" when end => '8',
-			"fiveight" when !end => '5',
-			"oneight" when end => '8',
-			"oneight" when !end => '1',
-			"eightwo" when end => '2',
-			"eightwo" when !end => '8',
 			_ => throw new ArgumentException("Not a valid number", nameof(value))
 		};
 	}
@@ -61,9 +46,18 @@ static char ToNumber(string value, bool end = false)
 
 partial class Program
 {
-	[GeneratedRegex("[1-9]", RegexOptions.Compiled)]
-	private static partial Regex DigitRegex();
+	private const string Digits = "[1-9]";
+	private const string DigitsAndNames = "[1-9]|one|two|three|four|five|six|seven|eight|nine";
 
-	[GeneratedRegex("[1-9]|eightwo|oneight|fiveight|twone|sevenine|threeight|nineight|one|two|three|four|five|six|seven|eight|nine", RegexOptions.Compiled)]
-	private static partial Regex NumRegex();
+	[GeneratedRegex(Digits, RegexOptions.Compiled)]
+	private static partial Regex FirstDigitRegex();
+
+	[GeneratedRegex(Digits, RegexOptions.Compiled | RegexOptions.RightToLeft)]
+	private static partial Regex LastDigitRegex();
+
+	[GeneratedRegex(DigitsAndNames, RegexOptions.Compiled)]
+	private static partial Regex FirstNumRegex();
+
+	[GeneratedRegex(DigitsAndNames, RegexOptions.Compiled | RegexOptions.RightToLeft)]
+	private static partial Regex LastNumRegex();
 }
