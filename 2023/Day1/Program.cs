@@ -1,16 +1,45 @@
 ﻿using System.Text.RegularExpressions;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
 
-partial class Program
+static class Program
+{
+	static void Main(string[] args)
+	{
+		if (args.FirstOrDefault() == "benchmark")
+			BenchmarkRunner.Run<Solution>();
+		else
+		{
+			var sln = new Solution(silent: false);
+			sln.Part1();
+			sln.Part2();
+		}
+	}
+}
+
+[MemoryDiagnoser]
+public partial class Solution
 {
 	const string Digits = "[1-9]";
 	const string DigitsAndNames = "[1-9]|one|two|three|four|five|six|seven|eight|nine";
+	bool silent;
 
-	static void Main(string[] args)
+	public Solution(bool silent = true)
 	{
-		var p2 = args.FirstOrDefault() == "pt2";
+		this.silent = silent;
+	}
+
+	[Benchmark]
+	public void Part1() => Run(false);
+
+	[Benchmark]
+	public void Part2() => Run(true);
+
+	void Run(bool isPart2)
+	{
 		var sum = 0;
-		var firstNumRegex = p2 ? FirstNumRegex() : FirstDigitRegex();
-		var lastNumRegex = p2 ? LastNumRegex() : LastDigitRegex();
+		var firstNumRegex = isPart2 ? FirstNumRegex() : FirstDigitRegex();
+		var lastNumRegex = isPart2 ? LastNumRegex() : LastDigitRegex();
 
 		using var file = new StreamReader(File.OpenRead("/Users/tkimmett/source/adventofcode/2023/Day1/input.txt"));
 		while (!file.EndOfStream)
@@ -25,7 +54,8 @@ partial class Program
 			sum += calibrationValue;
 		}
 
-		Console.WriteLine($"Sum of calibration values{(p2 ? " (pt2)" : "")} = {sum}");
+		if (!silent)
+			Console.WriteLine($"Sum of calibration values{(isPart2 ? " (pt2)" : "")} = {sum}");
 
 		static char NormalizeDigit(ReadOnlySpan<char> text)
 		{
